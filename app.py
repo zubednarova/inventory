@@ -1,3 +1,21 @@
+"""
+Inventory Manager - Direct Storage Access Demo App
+"""
+
+import os
+from datetime import datetime
+from flask import Flask, render_template, request, jsonify
+
+from keboola_query_service import Client
+
+app = Flask(__name__)
+
+
+# -----------------------------------------------------------------------------
+# Configuration
+# -----------------------------------------------------------------------------
+
+
 def get_config():
     """Get configuration from environment variables."""
     return {
