@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .header-subtitle {
+            font-size: 14px;
+            color: #666;
+            margin-top: 4px;
+        }
+        
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+        
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+        
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+        
+        .btn-danger {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        
+        .btn-danger:hover {
+            background: #fecaca;
+        }
+        
+        .btn-success {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        
+        .btn-success:hover {
+            background: #bbf7d0;
+        }
+        
+        /* Card */
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 12px;
+            padding: 16px 20px;
+            background: #fafafa;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .category-select {
+            padding: 10px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            min-width: 160px;
+        }
+        
+        /* Table */
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            text-align: left;
+            padding: 14px 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6b7280;
+            background: #fafafa;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        th.text-right {
+            text-align: right;
+        }
+        
+        td {
+            padding: 16px 20px;
+            border-bottom: 1px solid #f3f4f6;
+            vertical-align: middle;
+        }
+        
+        td.text-right {
+            text-align: right;
+        }
+        
+        tr:hover {
+            background: #fafafa;
+        }
+        
+        tr.editing {
+            background: #fffbeb;
+        }
+        
+        .product-name {
+            font-weight: 500;
+        }
+        
+        .product-sku {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 2px;
+        }
+        
+        .category-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .category-electronics { background: #dbeafe; color: #1d4ed8; }
+        .category-clothing { background: #dcfce7; color: #16a34a; }
+        .category-home { background: #fef3c7; color: #d97706; }
+        .category-fitness { background: #f3e8ff; color: #7c3aed; }
+        .category-office { background: #e0e7ff; color: #4338ca; }
+        .category-kitchen { background: #ffe4e6; color: #e11d48; }
+        .category-outdoor { background: #ccfbf1; color: #0d9488; }
+        .category-default { background: #f3f4f6; color: #4b5563; }
+        
+        .quantity-low {
+            color: #dc2626;
+            font-weight: 600;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+        
+        .actions a {
+            color: #2563eb;
+            text-decoration: none;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .actions a:hover {
+            text-decoration: underline;
+        }
+        
+        .actions a.delete {
+            color: #dc2626;
+        }
+        
+        .actions a.save {
+            color: #16a34a;
+            font-weight: 500;
+        }
+        
+        .actions a.cancel {
+            color: #6b7280;
+        }
+        
+        /* Inline edit inputs */
+        .edit-input {
+            padding: 6px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 100%;
+        }
+        
+        .edit-input:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+        
+        .edit-input-small {
+            width: 80px;
+            text-align: right;
+        }
+        
+        /* Footer */
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 20px;
+            background: #fafafa;
+            border-top: 1px solid #e5e7eb;
+            font-size: 13px;
+            color: #6b7280;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+        }
+        
+        .status-dot.syncing {
+            background: #f59e0b;
+            animation: pulse 1s infinite;
+        }
+        
+        .status-dot.error {
+            background: #ef4444;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal {
+            background: white;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 480px;
+            padding: 24px;
+            transform: translateY(20px);
+            transition: transform 0.2s;
+        }
+        
+        .modal-overlay.active .modal {
+            transform: translateY(0);
+        }
+        
+        .modal h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #374151;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 1001;
+        }
+        
+        .toast {
+            padding: 14px 20px;
+            border-radius: 8px;
+            margin-top: 8px;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateX(120%);
+            transition: transform 0.3s;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .toast.success {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .toast.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+        
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid #e5e7eb;
+            border-top-color: #2563eb;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+        
+        .empty-state h3 {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #374151;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>Inventory Manager</h1>
+                <p class="header-subtitle" id="product-count">Loading...</p>
+            </div>
+            <button class="btn btn-primary" onclick="openAddModal()">+ Add product</button>
+        </div>
+        
+        <div class="card">
+            <div class="filters">
+                <input type="text" class="search-input" id="search" placeholder="Search products..." oninput="debounceSearch()">
+                <select class="category-select" id="category-filter" onchange="loadProducts()">
+                    <option value="all">All categories</option>
+                </select>
+            </div>
+            
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Category</th>
+                            <th class="text-right">Quantity</th>
+                            <th class="text-right">Price</th>
+                            <th class="text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="products-table">
+                        <tr>
+                            <td colspan="5">
+                                <div class="loading">
+                                    <div class="spinner"></div>
+                                    <p>Loading products...</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="footer">
+                <div class="status-indicator">
+                    <div class="status-dot" id="status-dot"></div>
+                    <span id="status-text">Connected to Storage · in.c-demo.inventory</span>
+                </div>
+                <span id="showing-count">-</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add Product Modal -->
+    <div class="modal-overlay" id="add-modal">
+        <div class="modal">
+            <h2>Add new product</h2>
+            <form onsubmit="addProduct(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="new-id">SKU / Product ID</label>
+                        <input type="text" id="new-id" required placeholder="SKU-101">
+                    </div>
+                    <div class="form-group">
+                        <label for="new-category">Category</label>
+                        <select id="new-category" required>
+                            <option value="">Select category</option>
+                            <option value="Electronics">Electronics</option>
+                            <option value="Clothing">Clothing</option>
+                            <option value="Home & Garden">Home & Garden</option>
+                            <option value="Fitness">Fitness</option>
+                            <option value="Office">Office</option>
+                            <option value="Kitchen">Kitchen</option>
+                            <option value="Outdoor">Outdoor</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="new-name">Product name</label>
+                    <input type="text" id="new-name" required placeholder="Enter product name">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="new-quantity">Quantity</label>
+                        <input type="number" id="new-quantity" required min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="new-price">Price ($)</label>
+                        <input type="number" id="new-price" required min="0" step="0.01" placeholder="0.00">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+    
+    <script>
+        // State
+        let products = [];
+        let categories = [];
+        let editingId = null;
+        let searchTimeout = null;
+        
+        // Category colors mapping
+        const categoryColors = {
+            'Electronics': 'electronics',
+            'Clothing': 'clothing',
+            'Home & Garden': 'home',
+            'Fitness': 'fitness',
+            'Office': 'office',
+            'Kitchen': 'kitchen',
+            'Outdoor': 'outdoor'
+        };
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProducts();
+        });
+        
+        // Debounce search
+        function debounceSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(loadProducts, 300);
+        }
+        
+        // Load products
+        async function loadProducts() {
+            const search = document.getElementById('search').value;
+            const category = document.getElementById('category-filter').value;
+            
+            setStatus('syncing', 'Syncing...');
+            
+            try {
+                const params = new URLSearchParams();
+                if (search) params.append('search', search);
+                if (category !== 'all') params.append('category', category);
+                
+                const response = await fetch(`/api/products?${params}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    products = data.products;
+                    categories = data.categories;
+                    renderProducts();
+                    renderCategoryFilter();
+                    updateCounts(data.total);
+                    setStatus('connected', 'Connected to Storage · in.c-demo.inventory');
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                console.error('Failed to load products:', error);
+                setStatus('error', 'Connection error');
+                showToast('Failed to load products: ' + error.message, 'error');
+            }
+        }
+        
+        // Render products table
+        function renderProducts() {
+            const tbody = document.getElementById('products-table');
+            
+            if (products.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5">
+                            <div class="empty-state">
+                                <h3>No products found</h3>
+                                <p>Try adjusting your search or add a new product.</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = products.map(product => {
+                const isEditing = editingId === product.id;
+                const categoryClass = categoryColors[product.category] || 'default';
+                const isLowStock = parseInt(product.quantity) <= 5;
+                
+                if (isEditing) {
+                    return `
+                        <tr class="editing">
+                            <td>
+                                <input type="text" class="edit-input" id="edit-name" value="${escapeHtml(product.name)}" style="max-width: 200px;">
+                                <div class="product-sku">${escapeHtml(product.id)}</div>
+                            </td>
+                            <td>
+                                <select class="edit-input" id="edit-category" style="max-width: 140px;">
+                                    ${['Electronics', 'Clothing', 'Home & Garden', 'Fitness', 'Office', 'Kitchen', 'Outdoor'].map(cat => 
+                                        `<option value="${cat}" ${product.category === cat ? 'selected' : ''}>${cat}</option>`
+                                    ).join('')}
+                                </select>
+                            </td>
+                            <td class="text-right">
+                                <input type="number" class="edit-input edit-input-small" id="edit-quantity" value="${product.quantity}" min="0">
+                            </td>
+                            <td class="text-right">
+                                <input type="number" class="edit-input edit-input-small" id="edit-price" value="${product.price}" min="0" step="0.01">
+                            </td>
+                            <td>
+                                <div class="actions">
+                                    <a class="save" onclick="saveEdit('${product.id}')">Save</a>
+                                    <a class="cancel" onclick="cancelEdit()">Cancel</a>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
+                
+                return `
+                    <tr>
+                        <td>
+                            <div class="product-name">${escapeHtml(product.name)}</div>
+                            <div class="product-sku">${escapeHtml(product.id)}</div>
+                        </td>
+                        <td>
+                            <span class="category-badge category-${categoryClass}">${escapeHtml(product.category)}</span>
+                        </td>
+                        <td class="text-right ${isLowStock ? 'quantity-low' : ''}">${product.quantity}</td>
+                        <td class="text-right">$${parseFloat(product.price).toFixed(2)}</td>
+                        <td>
+                            <div class="actions">
+                                <a onclick="startEdit('${product.id}')">Edit</a>
+                                <a class="delete" onclick="deleteProduct('${product.id}')">Delete</a>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        // Render category filter
+        function renderCategoryFilter() {
+            const select = document.getElementById('category-filter');
+            const currentValue = select.value;
+            
+            select.innerHTML = '<option value="all">All categories</option>' +
+                categories.map(cat => `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`).join('');
+            
+            select.value = currentValue;
+        }
+        
+        // Update counts
+        function updateCounts(total) {
+            document.getElementById('product-count').textContent = `${total} products · Last synced: just now`;
+            document.getElementById('showing-count').textContent = `Showing ${products.length} of ${total} products`;
+        }
+        
+        // Set status indicator
+        function setStatus(status, text) {
+            const dot = document.getElementById('status-dot');
+            const statusText = document.getElementById('status-text');
+            
+            dot.className = 'status-dot';
+            if (status === 'syncing') dot.classList.add('syncing');
+            if (status === 'error') dot.classList.add('error');
+            
+            statusText.textContent = text;
+        }
+        
+        // Start editing
+        function startEdit(id) {
+            editingId = id;
+            renderProducts();
+        }
+        
+        // Cancel editing
+        function cancelEdit() {
+            editingId = null;
+            renderProducts();
+        }
+        
+        // Save edit
+        async function saveEdit(id) {
+            const data = {
+                name: document.getElementById('edit-name').value,
+                category: document.getElementById('edit-category').value,
+                quantity: parseInt(document.getElementById('edit-quantity').value),
+                price: parseFloat(document.getElementById('edit-price').value)
+            };
+            
+            setStatus('syncing', 'Saving...');
+            
+            try {
+                const response = await fetch(`/api/products/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    editingId = null;
+                    showToast('Product updated successfully', 'success');
+                    loadProducts();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                setStatus('error', 'Save failed');
+                showToast('Failed to save: ' + error.message, 'error');
+            }
+        }
+        
+        // Delete product
+        async function deleteProduct(id) {
+            if (!confirm('Are you sure you want to delete this product?')) return;
+            
+            setStatus('syncing', 'Deleting...');
+            
+            try {
+                const response = await fetch(`/api/products/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('Product deleted', 'success');
+                    loadProducts();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                setStatus('error', 'Delete failed');
+                showToast('Failed to delete: ' + error.message, 'error');
+            }
+        }
+        
+        // Add product modal
+        function openAddModal() {
+            document.getElementById('add-modal').classList.add('active');
+        }
+        
+        function closeAddModal() {
+            document.getElementById('add-modal').classList.remove('active');
+            document.getElementById('new-id').value = '';
+            document.getElementById('new-name').value = '';
+            document.getElementById('new-category').value = '';
+            document.getElementById('new-quantity').value = '0';
+            document.getElementById('new-price').value = '';
+        }
+        
+        // Add product
+        async function addProduct(event) {
+            event.preventDefault();
+            
+            const data = {
+                id: document.getElementById('new-id').value,
+                name: document.getElementById('new-name').value,
+                category: document.getElementById('new-category').value,
+                quantity: parseInt(document.getElementById('new-quantity').value),
+                price: parseFloat(document.getElementById('new-price').value)
+            };
+            
+            setStatus('syncing', 'Adding...');
+            
+            try {
+                const response = await fetch('/api/products', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    closeAddModal();
+                    showToast('Product added successfully', 'success');
+                    loadProducts();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                setStatus('error', 'Add failed');
+                showToast('Failed to add product: ' + error.message, 'error');
+            }
+        }
+        
+        // Toast notifications
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 10);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+        
+        // Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
