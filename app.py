@@ -1,56 +1,10 @@
-"""
-Inventory Manager - Direct Storage Access Demo App
-===================================================
-A Keboola Data App demonstrating read/write capabilities via Query Service.
-Users can view, add, edit, and delete products — all changes sync to Storage.
-
-Storage Table: in.c-demo.inventory
-"""
-
-import os
-import json
-from datetime import datetime
-from flask import Flask, render_template, request, jsonify
-
-from keboola_query_service import Client
-
-app = Flask(__name__)
-
-# -----------------------------------------------------------------------------
-# Configuration
-# -----------------------------------------------------------------------------
-
 def get_config():
-    """Get configuration from environment variables and workspace manifest."""
-    # Get KBC URL and derive Query Service URL
-    kbc_url = os.environ.get('KBC_URL', 'https://connection.keboola.com')
-    # Convert connection URL to query URL
-    # e.g., https://connection.north-europe.azure.keboola.com -> https://query.north-europe.azure.keboola.com
-    query_url = kbc_url.replace('connection.', 'query.')
-    
-    kbc_token = os.environ.get('KBC_TOKEN')
-    branch_id = os.environ.get('KBC_BRANCH_ID', 'default')
-    
-    # Get workspace ID from manifest or environment
-    workspace_id = None
-    manifest_path = os.environ.get(
-        'KBC_WORKSPACE_MANIFEST_PATH',
-        '/var/run/secrets/keboola.com/workspace/manifest.json'
-    )
-    if os.path.exists(manifest_path):
-        with open(manifest_path, 'r') as f:
-            manifest = json.load(f)
-            workspace_id = manifest.get('workspaceId')
-    
-    # Fall back to environment variable
-    if not workspace_id:
-        workspace_id = os.environ.get('WORKSPACE_ID')
-    
+    """Get configuration from environment variables."""
     return {
-        'query_url': query_url,
-        'token': kbc_token,
-        'branch_id': branch_id,
-        'workspace_id': workspace_id
+        'query_url': os.environ.get('QUERY_SERVICE_URL'),
+        'token': os.environ.get('KBC_TOKEN'),
+        'branch_id': os.environ.get('BRANCH_ID'),
+        'workspace_id': os.environ.get('WORKSPACE_ID')
     }
 
 
