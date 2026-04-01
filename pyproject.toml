@@ -1,0 +1,13 @@
+[project]
+name = "inventory-manager"
+version = "0.1.0"
+description = "Keboola Data App demonstrating Direct Storage Access"
+requires-python = ">=3.11"
+dependencies = [
+    "flask>=3.0.0",
+    "keboola.query-service-client>=0.1.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
