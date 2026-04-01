@@ -15,6 +15,33 @@ app = Flask(__name__)
 # Configuration
 # -----------------------------------------------------------------------------
 
+@app.route('/api/debug')
+def debug():
+    """Debug endpoint to test raw query."""
+    try:
+        config = get_config()
+        with get_client() as client:
+            results = client.execute_query(
+                branch_id=config['branch_id'],
+                workspace_id=config['workspace_id'],
+                statements=['SELECT 1 as test']
+            )
+            return jsonify({
+                'success': True,
+                'result': results[0].data if results else None
+            })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'config': {
+                'query_url': config.get('query_url'),
+                'branch_id': config.get('branch_id'),
+                'workspace_id': config.get('workspace_id'),
+                'has_token': bool(config.get('token'))
+            }
+        }), 500
+
 def get_config():
     """Get configuration from environment variables."""
     return {
