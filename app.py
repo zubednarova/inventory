@@ -4,11 +4,6 @@ Inventory Manager - Direct Storage Access Demo App
 A Keboola Data App demonstrating read/write capabilities via Query Service.
 Users can view, add, edit, and delete products — all changes sync to Storage.
 
-Requirements:
-- keboola.query-service-client
-- flask
-- python-dotenv (for local dev)
-
 Storage Table: in.c-demo.inventory
 """
 
@@ -162,19 +157,12 @@ def delete_product(product_id):
     """Delete a product by ID."""
     client = get_query_client()
     
-    # For delete, we need to use TRUNCATE + re-insert remaining rows
-    # OR use a soft-delete pattern. Here we'll do a proper delete via SQL.
-    # Note: This requires the table to support DELETE operations
-    
-    # Alternative approach: mark as deleted or use workspace SQL
     query = f"DELETE FROM \"{INVENTORY_TABLE}\" WHERE id = '{product_id}'"
     
     try:
         client.query(query)
         return True
     except Exception as e:
-        # If DELETE isn't supported, fall back to truncate + re-insert
-        # This is a simplified demo - production would handle this better
         app.logger.error(f"Delete failed: {e}")
         return False
 
@@ -183,7 +171,7 @@ def delete_product(product_id):
 # Routes
 # -----------------------------------------------------------------------------
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])  # Handle POST for Keboola startup check
 def index():
     """Main inventory page."""
     return render_template('index.html')
@@ -307,12 +295,3 @@ def health():
         })
     except Exception as e:
         return jsonify({'status': 'unhealthy', 'error': str(e)}), 500
-
-
-# -----------------------------------------------------------------------------
-# Main
-# -----------------------------------------------------------------------------
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 8050))
-    app.run(host='0.0.0.0', port=port, debug=True)
