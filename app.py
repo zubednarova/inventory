@@ -15,7 +15,6 @@ app = Flask(__name__)
 # Configuration
 # -----------------------------------------------------------------------------
 
-
 def get_config():
     """Get configuration from environment variables."""
     return {
@@ -89,32 +88,31 @@ def fetch_products(search=None, category=None):
     conditions = []
     
     if search:
-        # Escape single quotes in search
         safe_search = search.replace("'", "''")
-        conditions.append(f"(name ILIKE '%{safe_search}%' OR id ILIKE '%{safe_search}%')")
+        conditions.append(f"(\"name\" ILIKE '%{safe_search}%' OR \"id\" ILIKE '%{safe_search}%')")
     if category and category != 'all':
         safe_category = category.replace("'", "''")
-        conditions.append(f"category = '{safe_category}'")
+        conditions.append(f"\"category\" = '{safe_category}'")
     
     if conditions:
         query += ' WHERE ' + ' AND '.join(conditions)
     
-    query += ' ORDER BY name ASC'
+    query += ' ORDER BY "name" ASC'
     
     return execute_query(query)
 
 
 def fetch_categories():
     """Fetch distinct categories."""
-    query = f'SELECT DISTINCT category FROM {INVENTORY_TABLE} ORDER BY category'
+    query = f'SELECT DISTINCT "category" FROM {INVENTORY_TABLE} ORDER BY "category"'
     rows = execute_query(query)
-    return [row['CATEGORY'] for row in rows]
+    return [row.get('category') or row.get('CATEGORY') for row in rows]
 
 
 def get_product(product_id):
     """Fetch a single product by ID."""
     safe_id = product_id.replace("'", "''")
-    query = f"SELECT * FROM {INVENTORY_TABLE} WHERE id = '{safe_id}'"
+    query = f'SELECT * FROM {INVENTORY_TABLE} WHERE "id" = \'{safe_id}\''
     rows = execute_query(query)
     return rows[0] if rows else None
 
@@ -131,7 +129,7 @@ def create_product(data):
     price = float(data['price'])
     
     sql = f"""
-        INSERT INTO {INVENTORY_TABLE} (id, name, category, quantity, price, last_updated)
+        INSERT INTO {INVENTORY_TABLE} ("id", "name", "category", "quantity", "price", "last_updated")
         VALUES ('{safe_id}', '{safe_name}', '{safe_category}', {quantity}, {price}, '{now}')
     """
     
@@ -160,12 +158,12 @@ def update_product(product_id, data):
     
     sql = f"""
         UPDATE {INVENTORY_TABLE}
-        SET name = '{safe_name}',
-            category = '{safe_category}',
-            quantity = {quantity},
-            price = {price},
-            last_updated = '{now}'
-        WHERE id = '{safe_id}'
+        SET "name" = '{safe_name}',
+            "category" = '{safe_category}',
+            "quantity" = {quantity},
+            "price" = {price},
+            "last_updated" = '{now}'
+        WHERE "id" = '{safe_id}'
     """
     
     execute_statement(sql)
@@ -183,7 +181,7 @@ def update_product(product_id, data):
 def delete_product(product_id):
     """Delete a product using DELETE."""
     safe_id = product_id.replace("'", "''")
-    sql = f"DELETE FROM {INVENTORY_TABLE} WHERE id = '{safe_id}'"
+    sql = f'DELETE FROM {INVENTORY_TABLE} WHERE "id" = \'{safe_id}\''
     
     try:
         execute_statement(sql)
@@ -197,7 +195,7 @@ def delete_product(product_id):
 # Routes
 # -----------------------------------------------------------------------------
 
-@app.route('/', methods=['GET', 'POST'])  # Handle POST for Keboola startup check
+@app.route('/', methods=['GET', 'POST'])
 def index():
     """Main inventory page."""
     return render_template('index.html')
@@ -217,12 +215,12 @@ def api_list_products():
         normalized_products = []
         for p in products:
             normalized_products.append({
-                'id': p.get('ID') or p.get('id'),
-                'name': p.get('NAME') or p.get('name'),
-                'category': p.get('CATEGORY') or p.get('category'),
-                'quantity': p.get('QUANTITY') or p.get('quantity'),
-                'price': p.get('PRICE') or p.get('price'),
-                'last_updated': p.get('LAST_UPDATED') or p.get('last_updated')
+                'id': p.get('id') or p.get('ID'),
+                'name': p.get('name') or p.get('NAME'),
+                'category': p.get('category') or p.get('CATEGORY'),
+                'quantity': p.get('quantity') or p.get('QUANTITY'),
+                'price': p.get('price') or p.get('PRICE'),
+                'last_updated': p.get('last_updated') or p.get('LAST_UPDATED')
             })
         
         return jsonify({
@@ -241,7 +239,6 @@ def api_create_product():
     """API: Create a new product."""
     data = request.json
     
-    # Validate required fields
     required = ['id', 'name', 'category', 'quantity', 'price']
     missing = [f for f in required if not data.get(f)]
     if missing:
@@ -250,7 +247,6 @@ def api_create_product():
             'error': f'Missing required fields: {", ".join(missing)}'
         }), 400
     
-    # Check for duplicate ID
     existing = get_product(data['id'])
     if existing:
         return jsonify({
@@ -283,20 +279,17 @@ def api_update_product(product_id):
     """API: Update an existing product."""
     data = request.json
     
-    # Check product exists
     existing = get_product(product_id)
     if not existing:
         return jsonify({'success': False, 'error': 'Product not found'}), 404
     
-    # Normalize existing data (handle uppercase column names)
     existing_normalized = {
-        'name': existing.get('NAME') or existing.get('name'),
-        'category': existing.get('CATEGORY') or existing.get('category'),
-        'quantity': existing.get('QUANTITY') or existing.get('quantity'),
-        'price': existing.get('PRICE') or existing.get('price')
+        'name': existing.get('name') or existing.get('NAME'),
+        'category': existing.get('category') or existing.get('CATEGORY'),
+        'quantity': existing.get('quantity') or existing.get('QUANTITY'),
+        'price': existing.get('price') or existing.get('PRICE')
     }
     
-    # Merge with existing data
     updated_data = {
         'name': data.get('name', existing_normalized['name']),
         'category': data.get('category', existing_normalized['category']),
@@ -315,7 +308,6 @@ def api_update_product(product_id):
 @app.route('/api/products/<product_id>', methods=['DELETE'])
 def api_delete_product(product_id):
     """API: Delete a product."""
-    # Check product exists
     existing = get_product(product_id)
     if not existing:
         return jsonify({'success': False, 'error': 'Product not found'}), 404
@@ -346,4 +338,3 @@ def health():
         })
     except Exception as e:
         return jsonify({'status': 'unhealthy', 'error': str(e)}), 500
-
