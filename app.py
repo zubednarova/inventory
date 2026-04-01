@@ -13,7 +13,7 @@ from datetime import datetime
 from flask import Flask, render_template, request, jsonify
 
 # Query Service client for Direct Storage Access
-from keboola.query_service_client import Client as QueryServiceClient
+from keboola_query_service import Client
 
 app = Flask(__name__)
 
